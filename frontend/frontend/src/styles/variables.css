@@ -1,0 +1,14 @@
+:root {
+    --primary-color: #ff6347; /* Tomato */
+    --secondary-color: #4caf50; /* Green */
+    --background-color: #f8f9fa; /* Light Gray */
+    --text-color: #212529; /* Dark Gray */
+    --header-footer-bg: #343a40; /* Dark */
+    --button-bg: #ff6347; /* Tomato */
+    --button-hover-bg: #e5533d; /* Darker Tomato */
+    --card-bg: #ffffff; /* White */
+    --modal-bg: rgba(255, 255, 255, 0.9); /* Semi-transparent White */
+    --loader-color: #ff6347; /* Tomato */
+    --border-radius: 0.25rem; /* Border radius for buttons and cards */
+    --transition-speed: 0.3s; /* Transition speed for hover effects */
+}

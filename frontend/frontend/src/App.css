@@ -1,0 +1,67 @@
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa; /* Light background color */
+    color: #343a40; /* Dark text color */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-weight: bold;
+}
+
+a {
+    text-decoration: none;
+    color: #007bff; /* Primary link color */
+}
+
+a:hover {
+    color: #0056b3; /* Darker shade on hover */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header, .footer {
+    background-color: #343a40; /* Dark background for header and footer */
+    color: #ffffff; /* White text color */
+    padding: 10px 0;
+}
+
+.button {
+    background-color: #007bff; /* Primary button color */
+    color: #ffffff; /* White text color */
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}
+
+.card {
+    background-color: #ffffff; /* White background for cards */
+    border: 1px solid #dee2e6; /* Light border color */
+    border-radius: 5px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.loader {
+    border: 4px solid #f3f3f3; /* Light gray */
+    border-top: 4px solid #007bff; /* Primary color */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
