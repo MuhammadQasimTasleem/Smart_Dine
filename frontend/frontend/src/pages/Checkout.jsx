@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { CartContext } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { redirectToCheckout } from '../services/paymentService';
+import orderService from '../services/orderService';
 import '../styles/checkout.css';
 
 const Checkout = () => {
@@ -20,7 +21,8 @@ const Checkout = () => {
         cardNumber: '',
         cardExpiry: '',
         cardCvc: '',
-        saveInfo: false
+        saveInfo: false,
+        notes: ''
     });
     
     const [isProcessing, setIsProcessing] = useState(false);
@@ -40,15 +42,41 @@ const Checkout = () => {
         return subtotal + delivery + tax;
     };
 
+    const saveOrderToDatabase = async (paymentStatus = 'pending', stripePaymentId = '') => {
+        const orderData = {
+            customer_name: formData.firstName + ' ' + formData.lastName,
+            customer_email: formData.email,
+            customer_phone: formData.phone,
+            customer_address: `${formData.address}, ${formData.city}${formData.zipCode ? ', ' + formData.zipCode : ''}`,
+            order_type: 'delivery',
+            payment_status: paymentStatus,
+            stripe_payment_id: stripePaymentId,
+            special_instructions: formData.notes || '',
+            items: cartItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+            }))
+        };
+        
+        const response = await orderService.placeOrder(orderData);
+        return response;
+    };
+
     const handleCheckout = async (e) => {
         e.preventDefault();
         setIsProcessing(true);
         
         try {
             if (formData.paymentMethod === 'card') {
+                // Save order first with pending payment status
+                const orderResponse = await saveOrderToDatabase('pending');
+                
                 // Redirect to Stripe checkout
                 await redirectToCheckout({
                     order_type: 'food_order',
+                    order_id: orderResponse.order_id,
                     total_amount: calculateTotal(),
                     name: formData.firstName + ' ' + formData.lastName,
                     email: formData.email,
@@ -60,16 +88,21 @@ const Checkout = () => {
                     }))
                 });
             } else {
-                // Cash on Delivery or other methods
+                // Cash on Delivery or Easypaisa/JazzCash
+                const paymentMethod = formData.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Easypaisa/JazzCash';
+                
+                // Save order to database
+                const orderResponse = await saveOrderToDatabase('pending');
+                
                 clearCart();
                 
                 // Show success message
-                alert('🎉 Order placed successfully! Thank you for your order!\n\nPayment Method: ' + (formData.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Easypaisa/JazzCash') + '\nTotal: Rs. ' + calculateTotal().toFixed(0));
+                alert(`🎉 Order placed successfully! Thank you for your order!\n\nOrder ID: #${orderResponse.order_id}\nPayment Method: ${paymentMethod}\nTotal: Rs. ${calculateTotal().toFixed(0)}`);
                 navigate('/');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Payment failed: ' + (error.error || 'Something went wrong. Please try again.'));
+            alert('Order failed: ' + (error.message || 'Something went wrong. Please try again.'));
             setIsProcessing(false);
         }
     };

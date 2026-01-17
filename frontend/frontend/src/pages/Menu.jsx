@@ -1,31 +1,50 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { menuItems } from "../data/menuData";
+import { fetchMenuItems } from "../services/menuService";
 import { useCart } from "../context/CartContext";
 import "../styles/menu.css";
 
 const Menu = () => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("default");
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
 
+  // Fetch menu items from API
+  useEffect(() => {
+    const loadMenuItems = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchMenuItems();
+        setMenuItems(data);
+      } catch (error) {
+        console.error("Error loading menu items:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadMenuItems();
+  }, []);
+
   // Get unique categories
   const categories = useMemo(() => {
     const cats = [...new Set(menuItems.map((item) => item.category))];
     return ["all", ...cats];
-  }, []);
+  }, [menuItems]);
 
   // Get price range from menu items
   const priceExtent = useMemo(() => {
+    if (menuItems.length === 0) return { min: 0, max: 1000 };
     const prices = menuItems.map((item) => item.price);
     return {
       min: Math.min(...prices),
       max: Math.max(...prices),
     };
-  }, []);
+  }, [menuItems]);
 
   // Filter and sort menu items
   const filteredAndSortedItems = useMemo(() => {
@@ -75,7 +94,7 @@ const Menu = () => {
     }
 
     return result;
-  }, [searchQuery, selectedCategory, sortBy, priceRange]);
+  }, [menuItems, searchQuery, selectedCategory, sortBy, priceRange]);
 
   const handleAddToCart = (item) => {
     addToCart(item);
@@ -99,6 +118,21 @@ const Menu = () => {
     sortBy !== "default" ||
     priceRange.min > priceExtent.min ||
     priceRange.max < priceExtent.max;
+
+  if (loading) {
+    return (
+      <div className="menu-page">
+        <div className="menu-header">
+          <h1>Our Menu</h1>
+          <p>Discover our delicious offerings</p>
+        </div>
+        <div className="loading-container" style={{ textAlign: 'center', padding: '4rem' }}>
+          <div className="loading-spinner" style={{ fontSize: '3rem', marginBottom: '1rem' }}>🍽️</div>
+          <p>Loading delicious dishes...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="menu-page">

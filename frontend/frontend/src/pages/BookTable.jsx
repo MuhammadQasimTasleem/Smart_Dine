@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { getTables } from '../data/tableData';
 import { redirectToCheckout } from '../services/paymentService';
+import { createReservation } from '../services/reservationService';
 import '../styles/reservation.css';
 
 const BookTable = () => {
@@ -43,12 +44,32 @@ const BookTable = () => {
     setShowPayment(true);
   };
 
+  const saveReservationToDatabase = async () => {
+    const reservationData = {
+      customer_name: formData.name,
+      customer_email: formData.email || `${formData.name.replace(/\s+/g, '').toLowerCase()}@customer.com`,
+      customer_phone: formData.phone,
+      date: formData.date,
+      time: formData.time,
+      party_size: parseInt(formData.guests),
+      special_requests: `${formData.occasion ? 'Occasion: ' + formData.occasion + '. ' : ''}${formData.notes || ''} Table ${selectedTable.number} (${selectedTable.type})`.trim()
+    };
+    
+    const response = await createReservation(reservationData);
+    return response;
+  };
+
   const handleConfirmReservation = async () => {
-    if (paymentMethod === 'card') {
-      setIsProcessing(true);
-      try {
+    setIsProcessing(true);
+    
+    try {
+      if (paymentMethod === 'card') {
+        // Save reservation first
+        const reservationResponse = await saveReservationToDatabase();
+        
         await redirectToCheckout({
           order_type: 'table_reservation',
+          reservation_id: reservationResponse.reservation_id,
           total_amount: 500,
           name: formData.name,
           email: formData.email || formData.name + '@customer.com',
@@ -59,14 +80,18 @@ const BookTable = () => {
             quantity: 1
           }]
         });
-      } catch (error) {
-        alert('Payment failed: ' + (error.error || 'Unknown error occurred'));
+      } else {
+        // Save reservation to database
+        const reservationResponse = await saveReservationToDatabase();
+        
+        alert(`🎉 Reservation Confirmed!\n\nReservation ID: #${reservationResponse.reservation_id}\nTable: ${selectedTable.number}\nDate: ${formData.date}\nTime: ${formData.time}\nGuests: ${formData.guests}\nPayment: Pay at Restaurant`);
+        closeModal();
+        setSelectedTable(null);
         setIsProcessing(false);
       }
-    } else {
-      alert(`Reservation Confirmed!\nTable: ${selectedTable.number}\nDate: ${formData.date}\nTime: ${formData.time}\nGuests: ${formData.guests}\nPayment: Pay at Restaurant`);
-      closeModal();
-      setSelectedTable(null);
+    } catch (error) {
+      alert('Reservation failed: ' + (error.message || 'Unknown error occurred'));
+      setIsProcessing(false);
     }
   };
 

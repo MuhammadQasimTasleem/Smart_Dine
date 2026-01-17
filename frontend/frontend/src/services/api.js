@@ -11,8 +11,13 @@ const api = axios.create({
 
 // --- ADD THIS SECTION ---
 // Request interceptor to add the auth token header to every request
+// Only sets token if the config doesn't already have Authorization header
 api.interceptors.request.use(
     (config) => {
+        // Don't override if Authorization header is already set
+        if (config.headers.Authorization) {
+            return config;
+        }
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Token ${token}`;

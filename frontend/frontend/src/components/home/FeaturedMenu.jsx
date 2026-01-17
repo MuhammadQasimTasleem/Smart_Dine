@@ -1,13 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getFeaturedItems } from '../../data/menuData';
+import { fetchMenuItems } from '../../services/menuService';
 import { useCart } from '../../context/CartContext';
 import '../../styles/featuredMenu.css';
 
 const FeaturedMenu = () => {
-  const featuredItems = getFeaturedItems();
+  const [featuredItems, setFeaturedItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadFeaturedItems = async () => {
+      try {
+        const data = await fetchMenuItems();
+        // Get featured items or first 6 items
+        const featured = data.filter(item => item.is_featured).slice(0, 6);
+        setFeaturedItems(featured.length > 0 ? featured : data.slice(0, 6));
+      } catch (error) {
+        console.error("Error loading featured items:", error);
+        setFeaturedItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadFeaturedItems();
+  }, []);
 
   const handleAddToCart = (item) => {
     addToCart(item);
@@ -17,6 +35,18 @@ const FeaturedMenu = () => {
     // Redirect to order form page with item details (don't add to cart)
     navigate("/order-now", { state: { item } });
   };
+
+  if (loading) {
+    return (
+      <section className="featured-menu">
+        <div className="featured-header">
+          <h2>Featured Menu</h2>
+          <p>Discover our chef's specially curated dishes</p>
+        </div>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>
+      </section>
+    );
+  }
 
   return (
     <section className="featured-menu">
@@ -32,12 +62,12 @@ const FeaturedMenu = () => {
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <div className="featured-image-wrapper">
-              <img src={item.image} alt={item.name} />
+              <img src={item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'} alt={item.name} />
               <div className="featured-overlay">
-                <span className="category-tag">{item.category}</span>
-                {item.isVeg !== undefined && (
-                  <span className={`veg-indicator ${item.isVeg ? 'veg' : 'non-veg'}`}>
-                    {item.isVeg ? '🟢' : '🔴'}
+                <span className="category-tag">{item.category_name || item.category}</span>
+                {(item.isVeg !== undefined || item.is_veg !== undefined) && (
+                  <span className={`veg-indicator ${item.isVeg || item.is_veg ? 'veg' : 'non-veg'}`}>
+                    {item.isVeg || item.is_veg ? '🟢' : '🔴'}
                   </span>
                 )}
               </div>

@@ -31,36 +31,46 @@ const Login = () => {
         e.preventDefault();
         setError('');
         setSuccess('');
+        setShowResend(false);
         setLoading(true);
 
         try {
             const response = await login({ email, password });
-            setSuccess(response.message || 'Login successful!');
             
-            // Redirect to home after successful login
-            setTimeout(() => {
-                navigate('/');
-            }, 1000);
+            if (response.success) {
+                setSuccess(response.message || 'Login successful!');
+                
+                // Redirect to home after successful login
+                setTimeout(() => {
+                    navigate('/');
+                }, 1500);
+            }
         } catch (err) {
             // Handle specific error types from backend
-            if (err.error === 'not_registered') {
-                setError('No account found with this email. Please register first.');
-                setShowResend(false);
-            } else if (err.error === 'invalid_credentials') {
-                setError('Invalid credentials. Please check your email and password.');
-                setShowResend(false);
-            } else if (err.error === 'missing_fields') {
-                setError('Please provide both email and password.');
-                setShowResend(false);
-            } else if (err.error === 'email_not_verified') {
-                setError('Please verify your email before logging in. Check your inbox for the verification link.');
-                setShowResend(true);
-            } else if (err.message) {
-                setError(err.message);
-                setShowResend(false);
-            } else {
-                setError('Login failed. Please try again.');
-                setShowResend(false);
+            const errorType = err.error || '';
+            const errorMessage = err.message || 'Login failed. Please try again.';
+            
+            switch (errorType) {
+                case 'not_registered':
+                    setError('No account found with this email. Please register first.');
+                    break;
+                case 'invalid_credentials':
+                    setError('Invalid credentials. Please check your password.');
+                    break;
+                case 'missing_email':
+                case 'missing_password':
+                case 'missing_fields':
+                    setError('Please provide both email and password.');
+                    break;
+                case 'invalid_email':
+                    setError('Please enter a valid email address.');
+                    break;
+                case 'email_not_verified':
+                    setError('Please verify your email before logging in. Check your inbox for the verification link.');
+                    setShowResend(true);
+                    break;
+                default:
+                    setError(errorMessage);
             }
         } finally {
             setLoading(false);

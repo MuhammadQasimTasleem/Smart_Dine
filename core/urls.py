@@ -30,6 +30,7 @@ def api_root(request):
             'menu': '/api/menu/',
             'orders': '/api/orders/',
             'reservations': '/api/reservations/',
+            'admin_panel': '/api/admin-panel/',
         }
     })
 
@@ -43,4 +44,5 @@ urlpatterns = [
     path('api/menu/', include('menu.urls')),
     path('api/orders/', include('orders.urls')),
     path('api/reservations/', include('reservations.urls')),
+    path('api/admin-panel/', include('admin_panel.urls')),
 ]

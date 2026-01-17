@@ -35,19 +35,27 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (credentials) => {
     try {
       const { login: loginService } = await import("../services/authService");
-      const response = await loginService(email, password);
-      if (response.token) {
+      const response = await loginService(credentials.email, credentials.password);
+      
+      if (response.token || response.success) {
         setUser(response);
         setIsAuthenticated(true);
-        return { success: true, data: response };
+        return { success: true, message: response.message || 'Login successful!', data: response };
       }
-      return { success: false, message: response.message || "Login failed" };
+      
+      // This shouldn't happen normally, but handle it
+      throw { response: { data: { error: 'unknown', message: 'Login failed' } } };
     } catch (error) {
-      const message = error.response?.data?.message || "Login failed";
-      return { success: false, message, error: error.response?.data };
+      // Extract error info from response
+      const errorData = error.response?.data || {};
+      const errorObj = {
+        error: errorData.error || 'unknown',
+        message: errorData.message || 'Login failed. Please try again.',
+      };
+      throw errorObj;
     }
   };
 
