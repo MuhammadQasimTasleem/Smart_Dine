@@ -1,6 +1,6 @@
 // This file contains constant values used throughout the application.
 
-export const API_BASE_URL = 'http://localhost:8000/api'; // Base URL for API calls
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const MENU_CATEGORIES = [
     'Appetizers',
